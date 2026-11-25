@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HealthLit</title>
+<style>body{font-family:system-ui,sans-serif;max-width:680px;margin:auto;padding:16px;background:#f5faf8;color:#17302a}
+textarea{width:100%;box-sizing:border-box;padding:10px;font:inherit;border:1px solid #9bbdb2;border-radius:8px}
+button{padding:10px 16px;margin:8px 8px 0 0;border:0;border-radius:8px;background:#0b6e55;color:#fff;font:inherit;cursor:pointer}
+#out{margin-top:16px;padding:14px;border-radius:8px;background:#fff;white-space:pre-wrap}.urgent{border:3px solid #b00020}small{color:#55706a}</style>
+<h1>HealthLit</h1><p>Plain-language health information. <b>In an emergency call 112.</b></p>
+<textarea id="t" rows="5" maxlength="4000" placeholder="Ask: What are the warning signs of dengue?  Or paste medical text to explain."></textarea>
+<button onclick="go('ask')">Ask a question</button><button onclick="go('simplify')">Explain medical words</button>
+<div id="out" hidden></div><p><small>Not medical advice. Do not enter names, phone numbers or ID numbers.</small></p>
+<script>
+async function go(kind){
+ const out=document.getElementById('out');out.hidden=false;out.className='';out.textContent='Working...';
+ try{
+  const r=await fetch('/api/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:document.getElementById('t').value})});
+  const d=await r.json(); if(!r.ok) throw new Error(d.error);
+  out.textContent=d.answer; if(d.status==='emergency'||d.status==='crisis') out.className='urgent';
+  for(const s of d.sources){const p=document.createElement('div'),a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener';a.textContent='['+s.id+'] '+s.source;p.appendChild(a);out.appendChild(p)}
+  const m=document.createElement('small');m.textContent='\nMode: '+d.mode+'. '+d.disclaimer;out.appendChild(m);
+ }catch(e){out.textContent='Could not get an answer: '+e.message}
+}
+</script></html>
